@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A Birthday Surprise 🎂</title>
+<style>
+  :root { --pink:#ff5fa2; --deep-pink:#e93683; --cream:#fff4f8; }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; min-height:100vh; overflow:hidden; font-family:Georgia, "Times New Roman", serif;
+    background:radial-gradient(circle at top,#fff0f6,#f7c5d8 70%,#eaa1bf);
+    color:#77234b;
+  }
+  button { font:inherit; cursor:pointer; }
+  #startScreen {
+    position:fixed; inset:0; z-index:20; display:grid; place-items:center; text-align:center;
+    background:linear-gradient(135deg,#4b061b,#8c0e31 55%,#4b061b); color:#fff2f5; padding:24px;
+  }
+  .start-card { max-width:520px; }
+  .start-card h1 { font-size:clamp(2rem,7vw,4rem); margin:0 0 12px; }
+  .start-card p { font-size:1.1rem; line-height:1.6; }
+  .start-btn {
+    border:2px solid #ffd4e3; border-radius:999px; padding:14px 26px; color:#7b1033;
+    background:#ffe3ed; box-shadow:0 8px 25px #21000b66; font-weight:bold;
+  }
+  #stage { position:fixed; inset:0; display:none; overflow:hidden; }
+  .curtain {
+    position:absolute; top:0; bottom:0; width:51%; z-index:10;
+    background:repeating-linear-gradient(90deg,#680018 0,#9c0b2e 12px,#c31d42 24px,#870020 38px);
+    box-shadow:inset -14px 0 28px #35000d88, inset 12px 0 22px #ff526344;
+    transition:transform 2s cubic-bezier(.65,0,.25,1);
+  }
+  #leftCurtain { left:0; border-right:5px solid #e9b65b; }
+  #rightCurtain { right:0; border-left:5px solid #e9b65b; }
+  #stage.open #leftCurtain { transform:translateX(-102%); }
+  #stage.open #rightCurtain { transform:translateX(102%); }
+  .valance {
+    position:absolute; top:-14px; left:-2%; width:104%; height:80px; z-index:11;
+    background:repeating-radial-gradient(ellipse at top,#b51a3c 0 28px,#6c001b 30px 43px);
+    border-bottom:5px solid #f1c66f; border-radius:0 0 50% 50%;
+    transition:transform 1.5s ease;
+  }
+  #stage.open .valance { transform:translateY(-110%); }
+  #cakeScene {
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:30px 16px; opacity:0; transition:opacity 1s ease;
+  }
+  #stage.open #cakeScene { opacity:1; }
+  .intro { font-size:clamp(1.3rem,4vw,2.2rem); color:#b32363; margin:0 0 18px; text-shadow:0 2px white; }
+  .cake-wrap { transform:translateY(110vh); transition:transform 1.8s cubic-bezier(.2,.8,.2,1); }
+  #stage.cake-up .cake-wrap { transform:translateY(0); }
+  .cake { position:relative; width:min(270px,70vw); height:180px; margin:0 auto 12px; }
+  .cake-top {
+    position:absolute; left:4%; top:55px; width:92%; height:50px; border-radius:50%;
+    background:#fff0f5; border:4px solid #f29abe; z-index:3;
+  }
+  .cake-body {
+    position:absolute; left:4%; top:78px; width:92%; height:85px; border-radius:0 0 20px 20px;
+    background:linear-gradient(90deg,#f58bb7,#ffd1e3 45%,#f38ab7); border:4px solid #e66a9c;
+  }
+  .icing {
+    position:absolute; z-index:4; left:4%; top:82px; width:92%; height:32px;
+    background:#fff0f6; border-radius:0 0 50% 50%;
+  }
+  .icing:after { content:""; position:absolute; left:15%; right:15%; bottom:-14px; height:24px;
+    background:radial-gradient(circle at 12px 0,#fff0f6 12px,transparent 13px) 0 0/35px 25px repeat-x; }
+  .candle { position:absolute; z-index:5; top:12px; left:calc(50% - 5px); width:10px; height:48px;
+    border-radius:4px; background:repeating-linear-gradient(135deg,#fff 0 7px,#ff5e98 7px 14px); }
+  .flame { position:absolute; top:-20px; left:-5px; width:20px; height:25px; border-radius:60% 40% 60% 40%;
+    background:#ffb52e; box-shadow:0 0 20px #ff9c28; transform:rotate(45deg); animation:flicker .45s infinite alternate; }
+  @keyframes flicker { to { transform:rotate(35deg) scale(.84); opacity:.8; } }
+  .cake-decor { position:absolute; z-index:6; top:119px; left:0; width:100%; font-size:25px; letter-spacing:10px; }
+  .cake-shadow { width:min(320px,80vw); height:20px; border-radius:50%; background:#a84b7450; filter:blur(5px); margin:auto; }
+  #cakeMessage { font-size:clamp(1rem,3.5vw,1.35rem); margin-top:15px; color:#a51e5c; }
+  #mailScene {
+    display:none; position:absolute; inset:0; align-items:center; justify-content:center; flex-direction:column;
+    gap:20px; text-align:center; padding:20px; z-index:2;
+  }
+  #mailScene.show { display:flex; animation:fadeIn .8s ease both; }
+  @keyframes fadeIn { from {opacity:0; transform:scale(.95)} to {opacity:1;transform:scale(1)} }
+  #mailScene h2 { font-size:clamp(1.6rem,5vw,2.5rem); margin:0; color:#a51e5c; }
+  #mailScene p { margin:0; }
+  .envelope-button { border:0; background:transparent; padding:8px; animation:bob 1.8s ease-in-out infinite; }
+  @keyframes bob { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-12px) rotate(2deg)} }
+  .envelope { position:relative; width:min(250px,68vw); height:160px; border-radius:12px; background:#ff9fbd;
+    box-shadow:0 16px 30px #a82e6250; border:3px solid #e85c91; }
+  .envelope:before { content:""; position:absolute; inset:0; background:#ffc2d5; clip-path:polygon(0 0,50% 57%,100% 0); border-radius:8px 8px 0 0; }
+  .envelope:after { content:""; position:absolute; inset:0; background:#ffb0c9; clip-path:polygon(0 100%,50% 42%,100% 100%); border-radius:0 0 8px 8px; }
+  .heart-seal { position:absolute; z-index:3; left:calc(50% - 18px); top:62px; font-size:38px; filter:drop-shadow(0 2px 2px #b32b5d66); }
+  #letterScene { display:none; position:absolute; inset:0; z-index:4; padding:20px 16px 24px; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
+  #letterScene.show { display:flex; animation:fadeIn .7s ease both; }
+  .photo-frame { width:min(540px,92vw); height:min(53vh,420px); min-height:190px; display:grid; place-items:center;
+    padding:10px; background:#fff9fc; border:5px solid white; outline:2px solid #f39abc; border-radius:18px;
+    box-shadow:0 12px 35px #9d35634a; position:relative; overflow:hidden; }
+  #slideshowImage { max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain; border-radius:9px; opacity:1; transition:opacity .15s; }
+  #photoFallback { display:none; text-align:center; padding:20px; color:#a51e5c; line-height:1.6; }
+  #letterLine { width:min(900px,96vw); min-height:3.2em; display:grid; place-items:center; text-align:center;
+    color:#f02f91; font-size:clamp(1.05rem,3.8vw,1.65rem); font-weight:bold; line-height:1.45;
+    text-shadow:0 1px #fff; padding:0 8px; }
+  #photoCount { color:#9d3262; font-size:.9rem; }
+  .tiny-hearts { position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:1; }
+  .heart { position:absolute; bottom:-40px; animation:floatUp 7s linear infinite; opacity:.7; }
+  @keyframes floatUp { to { transform:translateY(-115vh) rotate(25deg); opacity:0; } }
+  .restart { border:1px solid #e66b9d; color:#9e235b; background:#fff4f8; padding:9px 16px; border-radius:999px; }
+  @media(max-height:650px) {
+    .photo-frame { height:43vh; min-height:150px; }
+    #letterScene { gap:6px; }
+    .cake { transform:scale(.83); margin-top:-10px; margin-bottom:-5px; }
+  }
+</style>
+</head>
+<body>
+<div id="startScreen">
+  <div class="start-card">
+    <h1>🎀 A Little Birthday Surprise 🎀</h1>
+    <p>Something special is waiting behind the curtains…<br>Turn your sound on, then tap below to begin!</p>
+    <button class="start-btn" id="startButton">Open the Surprise ✨</button>
+  </div>
+</div>
+
+<div id="stage">
+  <div class="tiny-hearts" id="floatingHearts"></div>
+  <div id="leftCurtain" class="curtain"></div>
+  <div id="rightCurtain" class="curtain"></div>
+  <div class="valance"></div>
+
+  <section id="cakeScene">
+    <h1 class="intro">🎉 Happy Birthday! 🎉</h1>
+    <div class="cake-wrap">
+      <div class="cake" aria-label="Birthday cake">
+        <div class="candle"><div class="flame"></div></div>
+        <div class="cake-top"></div><div class="cake-body"></div><div class="icing"></div>
+        <div class="cake-decor">🍓 ✨ 🍓</div>
+      </div>
+      <div class="cake-shadow"></div>
+    </div>
+    <div id="cakeMessage">Make a wish and let the magic begin! 💗</div>
+  </section>
+
+  <section id="mailScene">
+    <h2>Someone has a little letter for you… 💌</h2>
+    <p>Tap the cute envelope to open your birthday surprise!</p>
+    <button class="envelope-button" id="openMail" aria-label="Open birthday letter">
+      <div class="envelope"><span class="heart-seal">💗</span></div>
+    </button>
+    <p style="color:#b02b66">Psst… it’s full of love ✨</p>
+  </section>
+
+  <section id="letterScene">
+    <div class="photo-frame">
+      <img id="slideshowImage" alt="Birthday memory">
+      <div id="photoFallback">Your pictures will appear here 💗<br>
+        Put images <b>1, 2, 3, 4, 55, 66, 77, 88</b> in the same folder as this HTML file.<br>
+        Supported extensions: .jpg, .jpeg, .png, .webp, .gif
+      </div>
+    </div>
+    <div id="letterLine" aria-live="polite"></div>
+    <div id="photoCount" style="display:none"></div>
+    <button class="restart" id="restartButton">Watch again ↻</button>
+  </section>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const stage = $('stage');
+  let audioContext = null;
+  let activeTimers = [];
+  let photoIndex = 0;
+  let lineIndex = 0;
+  let shuffledPhotos = [];
+  let imageTry = 0;
+  let audioNodes = [];
+  let birthdaySongTimer = null;
+
+  const baseNames = ['1', '2', '3', '4', '55', '66', '77', '88'];
+  const extensions = ['', '.jpg', '.jpeg', '.png', '.webp', '.gif', '.JPG', '.PNG'];
+  const letterLines = [
+    'Happy Birthday to someone truly special! 🎂💗',
+    'I hope your day is filled with laughter, love, and little surprises. ✨',
+    'May your smile stay bright and your heart stay happy. 🌷',
+    'You deserve all the beautiful things life has to offer. 💕',
+    'May this new year bring you courage, peace, and wonderful memories. 🦋',
+    'Thank you for being your lovely, one-of-a-kind self. 🎀',
+    'Keep dreaming big, laughing loudly, and being wonderfully you. 🌟',
+    'No matter how many birthdays pass, I hope you always feel loved. 💌',
+    'Here’s to more happy moments, silly memories, and exciting adventures! 🥳',
+    'Wishing you the happiest birthday ever. Lub u! 💗🎂'
+  ];
+
+  function later(fn, ms) {
+    const id = setTimeout(fn, ms);
+    activeTimers.push(id);
+    return id;
+  }
+  function clearTimers() {
+    activeTimers.forEach(clearTimeout);
+    activeTimers = [];
+    if (birthdaySongTimer) clearTimeout(birthdaySongTimer);
+    birthdaySongTimer = null;
+  }
+  function getAudio() {
+    if (!audioContext) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return null;
+      audioContext = new AudioCtx();
+    }
+    if (audioContext.state === 'suspended') audioContext.resume();
+    return audioContext;
+  }
+  function tone(freq, start, duration, type='sine', volume=.12) {
+    const ctx = getAudio();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, start);
+    gain.gain.setValueAtTime(.0001, start);
+    gain.gain.exponentialRampToValueAtTime(volume, start + .025);
+    gain.gain.setValueAtTime(volume, Math.max(start + .03, start + duration - .06));
+    gain.gain.exponentialRampToValueAtTime(.0001, start + duration);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(start); osc.stop(start + duration + .02);
+    audioNodes.push(osc);
+  }
+  function drumRoll(seconds=2.9) {
+    const ctx = getAudio();
+    if (!ctx) return;
+    const start = ctx.currentTime + .08;
+    // A soft snare-like roll made from filtered noise bursts.
+    for (let t=0; t<seconds; t+=.075) {
+      const bufferSize = Math.floor(ctx.sampleRate * .045);
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i=0; i<bufferSize; i++) data[i] = (Math.random()*2-1) * (1-i/bufferSize);
+      const src = ctx.createBufferSource();
+      const filter = ctx.createBiquadFilter();
+      const gain = ctx.createGain();
+      src.buffer = buffer; filter.type='highpass'; filter.frequency.value=900;
+      const when = start + t;
+      const strength = .035 + .055*(t/seconds);
+      gain.gain.setValueAtTime(strength, when);
+      gain.gain.exponentialRampToValueAtTime(.001, when+.045);
+      src.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
+      src.start(when); src.stop(when+.05);
+    }
+  }
+  function playBirthdayTune(seconds=10) {
+    const ctx = getAudio();
+    if (!ctx) return;
+    // Familiar "Happy Birthday" melody played instrumentally; repeated softly to fill ~10 seconds.
+    const notes = [
+      [392,.34],[392,.18],[440,.52],[392,.52],[523,.52],[494,.95],
+      [392,.34],[392,.18],[440,.52],[392,.52],[587,.52],[523,.95],
+      [392,.34],[392,.18],[784,.52],[659,.52],[523,.52],[494,.52],[440,.95],
+      [698,.34],[698,.18],[659,.52],[523,.52],[587,.52],[523,1.0]
+    ];
+    let cursor = ctx.currentTime + .15;
+    const endAt = cursor + seconds;
+    let n = 0;
+    while (cursor < endAt) {
+      const [freq, dur] = notes[n % notes.length];
+      tone(freq, cursor, Math.min(dur*.92, endAt-cursor), 'triangle', .09);
+      cursor += dur;
+      n++;
+    }
+    birthdaySongTimer = setTimeout(() => playBirthdayTune(seconds), seconds*1000);
+  }
+  function stopAudio() {
+    audioNodes.forEach(node => { try { node.stop(); } catch(e) {} });
+    audioNodes = [];
+  }
+  function sprinkleHearts() {
+    const host = $('floatingHearts');
+    host.innerHTML = '';
+    const emojis = ['💗','💕','✨','🌸','💖'];
+    for (let i=0; i<18; i++) {
+      const heart = document.createElement('span');
+      heart.className = 'heart';
+      heart.textContent = emojis[i % emojis.length];
+      heart.style.left = (Math.random()*100)+'%';
+      heart.style.animationDelay = (Math.random()*6)+'s';
+      heart.style.animationDuration = (5+Math.random()*5)+'s';
+      heart.style.fontSize = (14+Math.random()*18)+'px';
+      host.appendChild(heart);
+    }
+  }
+  function startSurprise() {
+    $('startScreen').style.display = 'none';
+    stage.style.display = 'block';
+    sprinkleHearts();
+    getAudio();
+    drumRoll(2.9);
+    later(() => {
+      stage.classList.add('open');
+      later(() => {
+        stage.classList.add('cake-up');
+        playBirthdayTune(10);
+        later(() => {
+          $('cakeScene').style.opacity = '0';
+          later(() => {
+            $('cakeScene').style.display = 'none';
+            $('mailScene').classList.add('show');
+          }, 650);
+        }, 10000);
+      }, 450);
+    }, 3000);
+  }
+
+  function tryImage() {
+    const img = $('slideshowImage');
+    if (!shuffledPhotos.length) {
+      shuffledPhotos = baseNames.slice().sort(() => Math.random() - .5);
+    }
+    if (photoIndex >= shuffledPhotos.length) {
+      shuffledPhotos = baseNames.slice().sort(() => Math.random() - .5);
+      photoIndex = 0;
+    }
+    const base = shuffledPhotos[photoIndex];
+    if (imageTry >= extensions.length) {
+      img.style.display = 'none';
+      $('photoFallback').style.display = 'block';
+      $('photoCount').textContent = 'Memory ' + (photoIndex+1) + ' of ' + shuffledPhotos.length;
+      return;
+    }
+    const src = base + extensions[imageTry];
+    imageTry++;
+    img.onerror = () => tryImage();
+    img.onload = () => {
+      img.style.display = 'block';
+      $('photoFallback').style.display = 'none';
+      $('photoCount').textContent = 'Memory ' + (photoIndex+1) + ' of ' + shuffledPhotos.length;
+    };
+    img.src = src;
+  }
+  function showNextSlide() {
+    if (!$('letterScene').classList.contains('show')) return;
+    // Pictures advance every 0.2 seconds and reshuffle after each full round.
+    if (photoIndex >= shuffledPhotos.length) {
+      shuffledPhotos = baseNames.slice().sort(() => Math.random() - .5);
+      photoIndex = 0;
+    }
+    const base = shuffledPhotos[photoIndex];
+    const memoryNumber = photoIndex + 1;
+    photoIndex++;
+    const img = $('slideshowImage');
+    const tryExtension = (extensionIndex) => {
+      if (extensionIndex >= extensions.length) return;
+      const candidate = base + extensions[extensionIndex];
+      const probe = new Image();
+      probe.onload = () => {
+        if ($('letterScene').classList.contains('show')) {
+          img.src = candidate;
+          img.style.display = 'block';
+          $('photoFallback').style.display = 'none';
+          $('photoCount').textContent = 'Memory ' + memoryNumber + ' of ' + shuffledPhotos.length;
+        }
+      };
+      probe.onerror = () => tryExtension(extensionIndex + 1);
+      probe.src = candidate;
+    };
+    tryExtension(0);
+    later(showNextSlide, 200);
+  }
+  function showNextLetterLine() {
+    if (!$('letterScene').classList.contains('show')) return;
+    $('letterLine').textContent = letterLines[lineIndex % letterLines.length];
+    lineIndex++;
+    later(showNextLetterLine, 1000);
+  }
+  function openLetter() {
+    // Keep the birthday music playing while the letter and slideshow are shown.
+    $('mailScene').classList.remove('show');
+    $('letterScene').classList.add('show');
+    photoIndex = 0; lineIndex = 0; imageTry = 0;
+    shuffledPhotos = baseNames.slice().sort(() => Math.random() - .5);
+    showNextSlide();
+    showNextLetterLine();
+  }
+  function restart() {
+    clearTimers();
+    stopAudio();
+    stage.classList.remove('open','cake-up');
+    $('cakeScene').style.display = 'flex';
+    $('cakeScene').style.opacity = '1';
+    $('mailScene').classList.remove('show');
+    $('letterScene').classList.remove('show');
+    $('startScreen').style.display = 'grid';
+    stage.style.display = 'none';
+    $('slideshowImage').src = '';
+  }
+
+  $('startButton').addEventListener('click', startSurprise);
+  $('openMail').addEventListener('click', openLetter);
+  $('restartButton').addEventListener('click', restart);
+})();
+</script>
+</body>
+</html>
